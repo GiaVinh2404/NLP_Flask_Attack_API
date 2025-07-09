@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attack Detection Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h2>Web Attack Detection - Realtime Dashboard</h2>
+    <div id="attack-graph" style="width:100%;height:500px;"></div>
+    <script>
+        async function fetchData() {
+            const res = await fetch('/stats');
+            const data = await res.json();
+            const trace = {
+                x: data.timestamps,
+                y: data.counts,
+                type: 'scatter',
+                mode: 'lines+markers',
+                marker: { color: 'red' }
+            };
+            const layout = {
+                title: 'Detected Attacks Over Time',
+                xaxis: { title: 'Time' },
+                yaxis: { title: 'Number of Attacks' }
+            };
+            Plotly.newPlot('attack-graph', [trace], layout);
+        }
+        setInterval(fetchData, 3000);
+        fetchData();
+    </script>
+</body>
+</html>

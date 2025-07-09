@@ -1,0 +1,40 @@
+# 🚫 Python
+__pycache__/
+*.py[cod]
+*.pkl
+*.pt
+*.h5
+*.log
+*.tmp
+
+# 🚫 Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# 🚫 Env / Dependency
+.env
+*.env
+venv/
+env/
+ENV/
+*.egg-info/
+
+# 🚫 Dataset & output
+*.csv
+*.tsv
+*.json
+*.xlsx
+*.zip
+*.tar.gz
+*.npy
+
+# 🚫 OS generated
+.DS_Store
+Thumbs.db
+
+# 🚫 IDE/Editor
+.vscode/
+.idea/
+*.swp
+
+# ✅ You can allow model if needed
+!model/codebert_attack_model.pkl
