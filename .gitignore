@@ -37,4 +37,4 @@ Thumbs.db
 *.swp
 
 # ✅ You can allow model if needed
-!model/codebert_attack_model.pkl
+model/codebert_attack_model.pkl
