@@ -1,19 +1,20 @@
+import os
+import gdown
 import pickle
-from transformers import RobertaTokenizer, RobertaForSequenceClassification
-import torch
 
-# Load model
-with open("MODEL_PATH", "rb") as f:
-    model = pickle.load(f)
+MODEL_PATH = "model/codebert_attack_model.pkl"
+DRIVE_FILE_ID = "1fQcSNlnnfbITLcXMoAjxbB6hbPde7glI"
+DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
 
-# Load tokenizer
-tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+def load_model():
+    # Tải model nếu chưa có
+    if not os.path.exists(MODEL_PATH):
+        print("[INFO] Downloading model from Google Drive...")
+        os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+        gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
 
-# Dự đoán 1 HTTP request
-def predict_request(text):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-        logits = outputs.logits
-        predicted_class = torch.argmax(logits, dim=1).item()
-        return "Attack" if predicted_class == 1 else "Normal"
+    # Load model
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+        print("[INFO] Model loaded successfully.")
+        return model

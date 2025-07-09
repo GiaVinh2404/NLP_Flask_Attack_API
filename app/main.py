@@ -1,19 +1,20 @@
 from flask import Flask, request, jsonify
-from model import predict_request
-from flask_cors import CORS
+from model.model import load_model
 
 app = Flask(__name__)
-CORS(app)  # Cho phép PHP hoặc web khác gọi API
+model = load_model()
 
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()
-    if not data or "text" not in data:
-        return jsonify({"error": "Missing 'text' in request"}), 400
+    http_request = data.get("text")
 
-    http_text = data["text"]
-    result = predict_request(http_text)
+    # TODO: xử lý request NLP → vector → model.predict
+
+    prediction = model.predict([http_request])[0]
+    result = "Attack" if prediction == 1 else "Normal"
+
     return jsonify({"result": result})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
