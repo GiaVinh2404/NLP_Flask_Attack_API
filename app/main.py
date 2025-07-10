@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
-from model.model import load_model
+from app.model.model import load_model
 
 app = Flask(__name__)
 model = load_model()

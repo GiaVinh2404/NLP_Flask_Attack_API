@@ -2,7 +2,7 @@ import os
 import gdown
 import pickle
 
-MODEL_PATH = "model/codebert_attack_model.pkl"
+MODEL_PATH = "api/model/codebert_attack_model.pkl"
 DRIVE_FILE_ID = "1fQcSNlnnfbITLcXMoAjxbB6hbPde7glI"
 DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
 
