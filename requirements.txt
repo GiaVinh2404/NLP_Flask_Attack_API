@@ -3,3 +3,5 @@ torch
 transformers
 flask-cors
 gdown
+huggingface-hub
+requests
