@@ -1,32 +1,138 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Attack Detection Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
-<body>
-    <h2>Web Attack Detection - Realtime Dashboard</h2>
-    <div id="attack-graph" style="width:100%;height:500px;"></div>
-    <script>
-        async function fetchData() {
-            const res = await fetch('/stats');
-            const data = await res.json();
-            const trace = {
-                x: data.timestamps,
-                y: data.counts,
-                type: 'scatter',
-                mode: 'lines+markers',
-                marker: { color: 'red' }
-            };
-            const layout = {
-                title: 'Detected Attacks Over Time',
-                xaxis: { title: 'Time' },
-                yaxis: { title: 'Number of Attacks' }
-            };
-            Plotly.newPlot('attack-graph', [trace], layout);
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
         }
-        setInterval(fetchData, 3000);
-        fetchData();
+
+        h2 {
+            color: #333;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .chart {
+            flex: 1;
+            min-width: 400px;
+            height: 400px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        th,
+        td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Web Attack Detection - Real-time Dashboard</h2>
+
+    <div class="chart-container">
+        <div id="attack-graph" class="chart"></div>
+        <div id="bar-chart" class="chart"></div>
+        <div id="pie-chart" class="chart"></div>
+    </div>
+
+    <h3>Last 20 Requests</h3>
+    <table id="log-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Timestamp</th>
+                <th>Label</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function updateDashboard() {
+            // LINE CHART - /stats
+            const statsRes = await fetch('/stats');
+            const stats = await statsRes.json();
+
+            Plotly.newPlot("attack-graph", [{
+                x: stats.timestamps,
+                y: stats.counts,
+                type: "scatter",
+                mode: "lines+markers",
+                marker: { color: "red" }
+            }], {
+                title: "Detected Attacks Over Time",
+                xaxis: { title: "Time" },
+                yaxis: { title: "Cumulative Attacks" }
+            });
+
+            // BAR + PIE CHART - /data
+            const dataRes = await fetch('/data');
+            const logs = await dataRes.json();
+            const labels = logs.results;
+            const timestamps = logs.timestamps;
+
+            const counts = labels.reduce((acc, label) => {
+                acc[label] = (acc[label] || 0) + 1;
+                return acc;
+            }, {});
+
+            // Bar Chart
+            Plotly.newPlot("bar-chart", [{
+                x: Object.keys(counts),
+                y: Object.values(counts),
+                type: "bar",
+                marker: { color: ["green", "red"] }
+            }], {
+                title: "Attack vs Normal Count (Last 20)",
+                xaxis: { title: "Label" },
+                yaxis: { title: "Count" }
+            });
+
+            // Pie Chart
+            Plotly.newPlot("pie-chart", [{
+                labels: Object.keys(counts),
+                values: Object.values(counts),
+                type: "pie"
+            }], {
+                title: "Attack vs Normal Ratio"
+            });
+
+            // TABLE
+            const tbody = document.querySelector("#log-table tbody");
+            tbody.innerHTML = "";
+            for (let i = 0; i < labels.length; i++) {
+                const row = `<tr>
+                    <td>${i + 1}</td>
+                    <td>${timestamps[i]}</td>
+                    <td>${labels[i]}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            }
+        }
+
+        // Cập nhật mỗi 3 giây
+        setInterval(updateDashboard, 3000);
+        updateDashboard();
     </script>
 </body>
+
 </html>

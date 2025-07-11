@@ -2,9 +2,18 @@ import os
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime
 from model.model import load_model
+from transformers import RobertaTokenizer
+import torch
 
 app = Flask(__name__)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 model = load_model()
+model.to(device)
+model.eval()
+
+tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
 
 # In-memory log for visualization
 logs = []
@@ -15,22 +24,36 @@ def home():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.get_json()
-    http_request = data.get("text")
+    try:
+        data = request.get_json()
+        http_request = data.get("text")
 
-    if not http_request:
-        return jsonify({"error": "Missing 'text' in request"}), 400
+        if not http_request:
+            return jsonify({"error": "Missing 'text' in request"}), 400
 
-    prediction = model.predict([http_request])[0]
-    result = "Attack" if prediction == 1 else "Normal"
+        # Encode và đưa về device
+        inputs = tokenizer(http_request, return_tensors="pt", truncation=True, padding=True)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
 
-    # Save to logs
-    logs.append({
-        "timestamp": datetime.now().strftime("%H:%M:%S"),
-        "label": result
-    })
+        # Dự đoán
+        with torch.no_grad():
+            outputs = model(**inputs)
+            prediction = torch.argmax(outputs.logits, dim=1).item()
 
-    return jsonify({"result": result})
+        result = "Attack" if prediction == 1 else "Normal"
+
+        # Lưu log để trực quan hóa
+        logs.append({
+            "timestamp": datetime.now().strftime("%H:%M:%S"),
+            "label": result
+        })
+
+        return jsonify({"result": result})
+    
+    except Exception as e:
+        print("[ERROR]", str(e))
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
+
 
 @app.route("/data", methods=["GET"])
 def get_data():
@@ -40,6 +63,7 @@ def get_data():
         "timestamps": [entry["timestamp"] for entry in last_logs],
         "results": [entry["label"] for entry in last_logs]
     })
+
 
 @app.route("/stats", methods=["GET"])
 def get_stats():
@@ -63,4 +87,4 @@ def dashboard():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True,host="0.0.0.0", port=port)
